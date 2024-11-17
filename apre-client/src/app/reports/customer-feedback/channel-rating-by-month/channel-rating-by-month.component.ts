@@ -96,6 +96,7 @@ export class ChannelRatingByMonthComponent {
     }
 
     const month = this.monthForm.controls['month'].value;
+
     this.http.get(`${environment.apiBaseUrl}/reports/customer-feedback/channel-rating-by-month?month=${month}`).subscribe({
       next: (data: any) => {
         if (data.length === 0) {

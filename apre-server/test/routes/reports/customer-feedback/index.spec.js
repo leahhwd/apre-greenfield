@@ -10,6 +10,7 @@ const request = require('supertest');
 const app = require('../../../../src/app');
 const { mongo } = require('../../../../src/utils/mongo');
 
+
 jest.mock('../../../../src/utils/mongo');
 
 // Test the customer feedback API
@@ -69,6 +70,68 @@ describe('Apre Customer Feedback API', () => {
     expect(response.status).toBe(404); // Expect a 404 status code
 
     // Expect the response body to match the expected data
+    expect(response.body).toEqual({
+      message: 'Not Found',
+      status: 404,
+      type: 'error'
+    });
+  });
+});
+
+describe('Customer Feedback by Year API', () => {
+
+  //attempting to solve the open handle issue
+  let timer;
+
+
+  beforeEach(() => {
+    mongo.mockClear();
+    timer = setTimeout(() => {}, 1000);
+  });
+
+  afterEach(() => {
+    clearTimeout(timer);
+  })
+  //Test for an empty array with no provided data
+  it('should return 200 with an empty array if no customer feedback is found', async () => {
+    // Mock the MongoDB implementation
+    mongo.mockImplementation(async (callback) => {
+      const db = {
+        collection: jest.fn().mockReturnThis(),
+        distinct: jest.fn().mockResolvedValue([])
+      };
+      await callback(db);
+    });
+
+    // Make a request to the endpoint
+    const response = await request(app).get('/api/reports/customer-feedback/customer-feedback-by-year?year=2023');
+
+    expect(response.status).toBe(200); // Expect a 200 status code
+    expect(response.body).toEqual([]); // Expect the response body to match the expected data
+  });
+
+
+  //Test for a 400 status code when missing parameter
+  it('should return 400 for a missing parameter', async () => {
+    //send the request to endpoint without year
+    const response = await request(app).get('/api/reports/customer-feedback/customer-feedback-by-year');
+
+    //Expect response
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      message: 'Year Required',
+      status: 400,
+      type: 'error'
+    });
+  });
+
+  //Test for a 404 error with an invalid endpoint
+  it('should return 404 for invalid endpoint', async () => {
+    //send the request to an invalid endpoint
+    const response = await request(app).get('/api/reports/customer-feedback/customer-feedback-byy-year?year=2023');
+
+    //Expected response
+    expect(response.status).toBe(404);
     expect(response.body).toEqual({
       message: 'Not Found',
       status: 404,

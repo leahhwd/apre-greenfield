@@ -92,4 +92,27 @@ router.get('/channel-rating-by-month', (req, res, next) => {
   }
 });
 
+//GET customer-feedback-by-year API
+router.get("/customer-feedback-by-year", (req, res, next) => {
+  try {
+    const { year } = req.query;
+
+    if(!year) {
+      return next(createError(400, "Year Required"))
+    }
+
+    const firstDay = new Date(`${year}-01-01T00:00:00Z`);
+    const lastDay = new Date(`${year}-12-31T23:59:59Z`);
+
+    mongo(async (db) => {
+      const data = await db.collection('customerFeedback').find({date: { $gte: firstDay, $lte: lastDay }}).toArray();
+      res.send(data);
+    }, next);
+  } catch(err) {
+    console.error('Error fetching customer feedback by year data');
+    next(err);
+  }
+});
+
+
 module.exports = router;
